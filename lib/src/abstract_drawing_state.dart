@@ -16,13 +16,13 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
     this.onFinishAnimation = onFinishAnimationDefault;
   }
 
-  AnimationController controller;
-  CurvedAnimation curve;
-  Curve animationCurve;
-  AnimationRange range;
-  String assetPath;
-  PathOrder animationOrder;
-  DebugOptions debug;
+  AnimationController? controller;
+  CurvedAnimation? curve;
+  Curve? animationCurve;
+  AnimationRange? range;
+  String? assetPath;
+  PathOrder? animationOrder;
+  DebugOptions? debug;
   int lastPaintedPathIndex = -1;
 
   List<PathSegment> pathSegments = List<PathSegment>();
@@ -31,15 +31,15 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
   List<PathSegment> pathSegmentsToPaintAsBackground =
       List<PathSegment>(); //defined by < [range.start]
 
-  VoidCallback onFinishAnimation;
+  late VoidCallback onFinishAnimation;
 
   /// Ensure that callback fires off only once even widget is rebuild.
   bool onFinishEvoked = false;
 
   void onFinishAnimationDefault() {
     if (this.widget.onFinish != null) {
-      this.widget.onFinish();
-      if (debug.recordFrames) resetFrame(debug);
+      this.widget.onFinish!();
+      if (debug!.recordFrames) resetFrame(debug!);
     }
   }
 
@@ -47,7 +47,7 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
     if (newPathPainted(currentPaintedPathIndex)) {
       evokeOnPaintForNewlyPaintedPaths(currentPaintedPathIndex);
     }
-    if (this.controller.status == AnimationStatus.completed) {
+    if (this.controller!.status == AnimationStatus.completed) {
       this.onFinishAnimation();
     }
   }
@@ -65,9 +65,9 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
 
   void evokeOnPaintForPath(int i) {
     //Only evoked in next frame
-    SchedulerBinding.instance.addPostFrameCallback((_) {
+    SchedulerBinding.instance!.addPostFrameCallback((_) {
       setState(() {
-        this.widget.onPaint(i, this.widget.paths[i]);
+        this.widget.onPaint!(i, this.widget.paths[i]);
       });
     });
   }
@@ -104,22 +104,22 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
   void applyAnimationCurve() {
     if (this.controller != null && widget.animationCurve != null) {
       this.curve = CurvedAnimation(
-          parent: this.controller, curve: this.widget.animationCurve);
+          parent: this.controller!, curve: this.widget.animationCurve!);
       this.animationCurve = widget.animationCurve;
     }
   }
 
   //TODO Refactor
-  Animation<double> getAnimation() {
-    Animation<double> animation;
-    if (this.widget.run == null || !this.widget.run) {
+  Animation<double>? getAnimation() {
+    Animation<double>? animation;
+    if (this.widget.run == null || !this.widget.run!) {
       animation = this.controller;
     } else if (this.curve != null &&
         this.animationCurve == widget.animationCurve) {
       animation = this.curve;
     } else if (widget.animationCurve != null && this.controller != null) {
       this.curve = CurvedAnimation(
-          parent: this.controller, curve: widget.animationCurve);
+          parent: this.controller!, curve: widget.animationCurve!);
       this.animationCurve = widget.animationCurve;
       animation = this.curve;
     } else {
@@ -141,13 +141,13 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
       if (this.widget.animationOrder != this.animationOrder) {
         this
             .pathSegments
-            .sort(Extractor.getComparator(this.widget.animationOrder));
+            .sort(Extractor.getComparator(this.widget.animationOrder!));
         this.animationOrder = this.widget.animationOrder;
       }
     });
   }
 
-  PathPainter buildForegroundPainter() {
+  PathPainter? buildForegroundPainter() {
     if (pathSegmentsToAnimate.isEmpty) return null;
     PathPainterBuilder builder =
         preparePathPainterBuilder(this.widget.lineAnimation);
@@ -155,14 +155,14 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
     return builder.build();
   }
 
-  PathPainter buildBackgroundPainter() {
+  PathPainter? buildBackgroundPainter() {
     if (pathSegmentsToPaintAsBackground.isEmpty) return null;
     PathPainterBuilder builder = preparePathPainterBuilder();
     builder.setPathSegments(this.pathSegmentsToPaintAsBackground);
     return builder.build();
   }
 
-  PathPainterBuilder preparePathPainterBuilder([LineAnimation lineAnimation]) {
+  PathPainterBuilder preparePathPainterBuilder([LineAnimation? lineAnimation]) {
     PathPainterBuilder builder = PathPainterBuilder(lineAnimation);
     builder.setAnimation(getAnimation());
     builder.setCustomDimensions(getCustomDimensions());
@@ -189,13 +189,13 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
 
       this.pathSegmentsToPaintAsBackground = this
           .pathSegments
-          .where((x) => x.pathIndex < this.widget.range.start)
+          .where((x) => x.pathIndex < this.widget.range!.start!)
           .toList();
 
       this.pathSegmentsToAnimate = this
           .pathSegments
-          .where((x) => (x.pathIndex >= this.widget.range.start &&
-              x.pathIndex <= this.widget.range.end))
+          .where((x) => (x.pathIndex >= this.widget.range!.start! &&
+              x.pathIndex <= this.widget.range!.end!))
           .toList();
 
       this.range = this.widget.range;
@@ -204,8 +204,8 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
 
   void checkValidRange() {
     RangeError.checkValidRange(
-        this.widget.range.start,
-        this.widget.range.end,
+        this.widget.range!.start!,
+        this.widget.range!.end,
         this.widget.paths.length - 1,
         "start",
         "end",
@@ -213,11 +213,11 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
   }
 
   // TODO Refactor
-  Size getCustomDimensions() {
+  Size? getCustomDimensions() {
     if (widget.height != null || widget.width != null) {
       return Size(
-        (widget.width != null) ? widget.width : 0,
-        (widget.height != null) ? widget.height : 0,
+        (widget.width != null) ? widget.width! : 0,
+        (widget.height != null) ? widget.height! : 0,
       );
     } else {
       return null;
@@ -234,19 +234,19 @@ abstract class AbstractAnimatedDrawingState extends State<AnimatedDrawing> {
 
   // TODO Refactor
   void addListenersToAnimationController() {
-    if (this.debug.recordFrames) {
-      this.controller.view.addListener(() {
+    if (this.debug!.recordFrames) {
+      this.controller!.view.addListener(() {
         setState(() {
-          if (this.controller.status == AnimationStatus.forward) {
-            iterateFrame(debug);
+          if (this.controller!.status == AnimationStatus.forward) {
+            iterateFrame(debug!);
           }
         });
       });
     }
 
-    this.controller.view.addListener(() {
+    this.controller!.view.addListener(() {
       setState(() {
-        if (this.controller.status == AnimationStatus.dismissed) {
+        if (this.controller!.status == AnimationStatus.dismissed) {
           this.lastPaintedPathIndex = -1;
         }
       });
